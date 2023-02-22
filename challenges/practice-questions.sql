@@ -49,19 +49,15 @@ CREATE DATABASE food_db;
 USE food_db;
 SELECT database();
 
-SHOW TABLES;
-
 CREATE TABLE pastries(
     name VARCHAR(50),
     quantity INT
 );
 
+SHOW TABLES;
 DESC patries;
 
 DROP TABLE pastries;
-
-SHOW TABLES;
-
 DROP DATABASE food_db;
 
 /**
@@ -100,10 +96,11 @@ DESC people;
 */
 
 INSERT INTO people(last_name, age, first_name)
-VALUES ("Belcher", 13, "Tina");
+VALUES
+("Belcher", 13, "Tina"),
+("Bradford", 61, "Steven");
 
-SELECT *
-FROM people;
+SELECT * FROM people;
 
 /**
 * ? get unique author full names ordered by author_lname descending from pre-existing books table in book_store
@@ -113,30 +110,37 @@ FROM people;
 *       * author_lname
 */
 
+SHOW DATABASES;
 SELECT database();
-USE books_db;
+CREATE DATABASE book_store;
+USE book_store;
 
-SELECT DISTNICT
-    author_fname,
+SELECT
+    DISTINCT author_fname,
     author_lname
 FROM books
 ORDER BY author_lname DESC;
 
 /**
-* ? verify using book_shop db then how many books are in the pre-existing book_shop db
+* ? verify using book_shop db then select how many books are in the pre-existing book_shop db
 *
 * * label query: 'number of books'
 */
 
+SHOW DATABASES;
 SELECT database();
+CREATE DATABASE book_shop;
 USE book_shop;
+
+DESC books;
+
+SELECT
+    COUNT(*) AS "number of books"
+FROM books;
 
 /*
     ! COUNT(*) = count every row in the given table
 */
-SELECT
-    COUNT(*) AS "number of books"
-FROM books;
 
 /**
 * ? how many unique author first names are in the books table of the pre-existing book_shop db
@@ -170,15 +174,17 @@ SHOW DATABASES;
 SELECT database();
 USE book_shop;
 
+SHOW TABLES;
+DESC books;
+
 /*
     ! COUNT(DISTINCT column_b, column_a) = only count rows where column_a AND column_b are unique (no duplicate full names)
 */
 SELECT
     COUNT(
-        DISTINCT
-            author_lname,
-            author_fname
-    ) AS "unique author full names"
+        DISTINCT author_fname,
+        author_lname
+    ) AS "author fullnames"
 FROM books;
 
 /**
@@ -191,11 +197,14 @@ SHOW DATABASES;
 SELECT database();
 USE book_shop;
 
+SHOW TABLES;
+DESC books;
+
 /*
     logic = select all rows from books table, where title is like '{anything}the{anything}'
 */
 SELECT
-    COUNT(*) AS "num_titles with 'the' keyword"
+    COUNT(*) AS "total titles with 'the' keyword"
 FROM books
 WHERE title LIKE "%the%";
 
@@ -208,6 +217,13 @@ WHERE title LIKE "%the%";
 *       * released_year
 */
 
+SHOW DATABASES;
+SELECT database();
+USE book_shop;
+
+SHOW TABLES;
+DESC books;
+
 SELECT
     title,
     released_year
@@ -216,7 +232,7 @@ ORDER BY released_year DESC
 LIMIT 5;
 
 /**
-* ? How many books (title as numBooks) has each author has written?
+* ? How many books (title as numBooks per author) has each author has written?
 *
 * * schema:
 *       * author_fname
@@ -229,12 +245,19 @@ LIMIT 5;
     !GROUP BY summarizes or aggregates identical data into single rows
 */
 
+SHOW DATABASES;
+SELECT database();
+USE book_shop;
+
+SHOW TABLES;
+DESC books;
+
 SELECT
-    author_fname,
+    DISTINCT author_fname,
     author_lname,
-    COUNT(*) AS numBooks
+    COUNT(*) AS "numBooks per author"
 FROM books
-GROUP BY author_lname, author_fname;
+GROUP BY DISTINCT author_fname, author_lname;
 
 /**
 * ? How can I get the 3rd through 7th titles
@@ -244,10 +267,15 @@ GROUP BY author_lname, author_fname;
 *       * title
 */
 
-SELECT title
+SHOW DATABASES;
+SELECT database();
+USE book_shop;
+
+SELECT
+    title
 FROM books
-ORDER BY title
-LIMIT 2,6;
+ORDER BY title ASC
+LIMIT 3, 7;
 
 /**
 * ? How can I get the author's full name, title, & released year
@@ -259,16 +287,18 @@ LIMIT 2,6;
 *       * released_year
 */
 
+SHOW DATABASES;
+SELECT database();
+USE book_shop;
+
 SELECT
-    CONCAT(
-        author_fname, " ", author_lname
-        ) AS author,
+    CONCAT(author_fname, " ", author_lname) AS author,
     title,
     released_year
 FROM books
-    WHERE title LIKE "%Harry Potter%"
-    ORDER BY released_year DESC
-        LIMIT 4;
+WHERE title LIKE "%Harry Potter%"
+ORDER BY released_year DESC
+LIMIT 4;
 
 /**
 * ? find the title of the longest book from the books table in the book_shop db
@@ -280,26 +310,27 @@ FROM books
 * *    pages
 */
 
-SELECT database();
 SHOW DATABASES;
+SELECT database();
 USE book_shop;
 
 -- option 1
 SELECT
     title
 FROM books
-    WHERE pages = (
-        SELECT
-            MAX(pages)
-        FROM books
-        );
+ORDER BY pages DESC
+LIMIT 1;
+
 
 -- option 2
 SELECT
     title
 FROM books
-    ORDER BY pages DESC
-    LIMIT 1;
+WHERE pages = (
+    SELECT
+        MAX(pages)
+    FROM books
+);
 
 /**
 * ? sum all pages per author full name
@@ -315,6 +346,15 @@ SHOW DATABASES;
 SELECT database();
 USE book_shop;
 
+-- option 1
+SELECT
+    CONCAT(author_fname, " ", author_lname) AS author,
+    SUM(pages) AS "sum pages"
+FROM books
+GROUP BY author
+ORDER BY "sum pages" DESC;
+
+-- option 2
 SELECT
     CONCAT(
         author_fname, " ", author_lname
@@ -336,23 +376,17 @@ FROM books
 *       * quantity
 */
 
-USE book_shop;
+SHOW DATABASES;
 SELECT database();
+USE book_shop;
 
 SELECT
     CONCAT(
         SUBSTRING(title, 1, 10),
         "..."
     ) AS "short title",
-    CONCAT(
-        author_fname, 
-        " ",
-        author_lname
-    ) AS "author fullname",
-    CONCAT(
-        quantity,
-        " in stock"
-    ) AS quantity
+    CONCAT(author_fname, " ", author_lname) AS "author fullname",
+    CONCAT(quantity, " in stock") AS stock 
 FROM books;
 
 /**
@@ -365,11 +399,16 @@ FROM books;
 * *     title
 */
 
+SHOW DATABASES;
+SELECT database();
+USE book_shop;
+
+SHOW TABLES;
+DESC books;
+
 SELECT
     SUBSTRING(
-        REPLACE(title, "e", "3"),
-        1,
-        10
+        REPLACE(title, "e", "3"), 1, 10
     ) AS UPPER("strange string")
 FROM books;
 
@@ -383,18 +422,21 @@ FROM books;
 *       * author_lname
 */
 
+SHOW DATABASES;
 SELECT database();
 USE book_shop;
 
+SHOW TABLES;
+DESC books;
+
 SELECT
+    author_lname,
+    CHAR_LENGTH(author_lname) AS "Last Name Count",
     CONCAT(
-        author_lname,
-        " is ",
-        CHAR_LENGTH(author_lname),
-        " characters long"
+        author_lname, " is ", CHAR_LENGTH(author_lname), " characters long"
     ) AS "Last Name Length"
 FROM books
-ORDER BY CHAR_LENGTH(author_lname) DESC;
+ORDER BY "Last Name Count" DESC;
 
 /**
 * ? How can I get the author first name & title
@@ -413,6 +455,13 @@ ORDER BY CHAR_LENGTH(author_lname) DESC;
 
         "da%" = da{anything}
 */
+
+SHOW DATABASES;
+SELECT database();
+USE book_shop;
+
+SHOW TABLES;
+DESC books;
 
 SELECT
     author_fname,
@@ -433,18 +482,31 @@ WHERE author_fname LIKE "da%";
 * *    author_lname
 */
 
-SELECT database();
 SHOW DATABASES;
+SELECT database();
 USE book_shop;
 
+-- option 1
 SELECT
     CONCAT(
         author_fname, " ", author_lname
-        ) AS "author",
+    ) AS "author",
+    title,
+    released_year AS "first year published"
+FROM books
+GROUP BY "author"
+ORDER BY released_year DESC
+LIMIT 1;
+
+-- option 2
+SELECT
+    CONCAT(
+        author_fname, " ", author_lname
+    ) AS "author",
     title,
     MIN(released_year) AS "first year published"
 FROM books
-    GROUP BY author_lname, author_fname;
+GROUP BY author_lname, author_fname;
 
 /**
 * ? sum all pages in the books table from the book_shop db
@@ -453,12 +515,14 @@ FROM books
 * *    pages
 */
 
-SELECT database();
 SHOW DATABASES;
+SELECT database();
 USE book_shop;
 
+DESC books;
+
 SELECT
-    SUM(pages) AS "total pages"
+    SUM(pages) AS "all pages"
 FROM books;
 
 /**
@@ -473,47 +537,43 @@ FROM books;
 *      * current_status(text, mandatory, default: employed)
 */
 
-SELECT database();
 SHOW DATABASES;
-
-CREATE DATABASE pet_store;
+SELECT database();
 USE pet_store;
 
 -- option 1
-
 CREATE TABLE employees(
-    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     first_name VARCHAR(255) NOT NULL,
     last_name VARCHAR(255) NOT NULL,
     middle_name VARCHAR(255),
     age INT NOT NULL,
-    current_status VARCHAR(10) NOT NULL DEFAULT "employed"
-
+    current_status VARCHAR(255) NOT NULL DEFAULT "employed"
 );
 
 -- option 2
-
--- CREATE TABLE employees (
---   id INT AUTO_INCREMENT NOT NULL,
---   first_name VARCHAR(255) NOT NULL,
---   last_name VARCHAR(255) NOT NULL,
---   middle_name VARCHAR(255),
---   age INT NOT NULL,
---   current_status VARCHAR(255) NOT NULL DEFAULT 'employed',
---   PRIMARY KEY(id)
--- );
+CREATE TABLE employees(
+    id INT AUTO_INCREMENT,
+    first_name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255) NOT NULL,
+    middle_name VARCHAR(255),
+    age INT NOT NULL,
+    current_status VARCHAR(255) NOT NULL DEFAULT "employed",
+    PRIMARY KEY(id)
+);
 
 SHOW TABLES;
 DESC employees;
 
-INSERT INTO employees(age, first_name, current_status, last_name)
-VALUES (33, "Ben", "terminated", "Riley"), (21, "Gary", "employed", "Silver");
+INSERT INTO employees(first_name, last_name, middle_name, age, current_status)
+VALUES
+("Enzo", "Vernon", "Dante", 31, "terminated"),
+("Cathryn", "Vernon", "Unknown", 56, "employed");
 
-SELECT *
-FROM employees;
+SELECT * FROM employees;
 
 /**
-* ? get stock quanity that has 4 place values from the books table in the book_shop db
+* ? get stock quantity that has 4 place values from the books table in the book_shop db
 *
 * ! underscores specify how many characters used with WHERE & LIKE
 *
@@ -522,6 +582,7 @@ FROM employees;
 * *     stock_quantity
 */
 
+SHOW DATABASES;
 SELECT database();
 USE book_shop;
 
@@ -544,10 +605,14 @@ WHERE stock_quantity LIKE "____";
 *      * age (DEFAULT: 0)
 */
 
-USE pets_db;
+SHOW DATABASES;
+SELECT database();
+
+CREATE DATABASE pet_store;
+USE pet_store;
 
 CREATE TABLE cats(
-    cats_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    cat_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL DEFAULT "MISSING",
     breed VARCHAR(255) NOT NULL DEFAULT "TBD",
     age INT NOT NULL DEFAULT 0
@@ -556,19 +621,23 @@ CREATE TABLE cats(
 SHOW TABLES;
 DESC cats;
 
-INSERT INTO cats(name, age)
-VALUES ("Cassy", 3), ("Riley", 5);
+INSERT INTO cats(name, breed, age)
+VALUES
+("Kerry", "Silver", 2),
+("Mick", "Carter", 5),
+("Yas", "Greg", 10);
 
 SELECT
     name,
-    age,
     breed,
+    age
 FROM cats
-WHERE cats_id = age;
+WHERE cat_id = age;
 
 DROP TABLE cats;
-
 SHOW TABLES;
+
+DELETE DATABASE cats; 
 
 /**
 * ? update Jackson's name to Jack in cats table in pets_db
@@ -582,13 +651,20 @@ SHOW TABLES;
 * *     age
 */
 
+SHOW DATABASES;
+SELECT database();
+USE pets_db;
+
+SHOW TABLES;
+DESC cats;
+
 SELECT *
 FROM cats
-    WHERE name = "Jackson"
+WHERE name = "Jackson";
 
 UPDATE cats
     SET name = "Jack"
-        WHERE name = "Jackson"
+WHERE name = "Jackson";
 
 /**
 * ? update Ringo's breed to "British Shorthair" in cats table in pets_db
@@ -602,13 +678,20 @@ UPDATE cats
 * *     age
 */
 
+SHOW DATABASES;
+SELECT database();
+USE pets_db;
+
+SHOW TABLES;
+DESC cats;
+
 SELECT *
 FROM cats
-    WHERE name = "Ringo"
+WHERE name = "Ringo";
 
 UPDATE cats
-    SET breed = "British Shorthair"
-        WHERE name = "Ringo"
+SET breed = "British Shorthair"
+WHERE name = "Ringo";
 
 /**
 * ? update both Maine Coons' ages to 12 in cats table in pets_db
@@ -622,13 +705,20 @@ UPDATE cats
 * *     age
 */
 
+SHOW DATABASES;
+SELECT database();
+USE pets_db;
+
+SHOW TABLES;
+DESC cats;
+
 SELECT *
 FROM cats
-    WHERE breed = "Maine Coons"
+WHERE breed = "Maine Coons";
 
 UPDATE cats
-    SET age = 12
-        WHERE breed = "Maine Coons"
+SET age = 12
+WHERE breed = "Maine Coons";
 
 /**
 * ? delete all 4 year old cats
@@ -644,28 +734,34 @@ UPDATE cats
 * *     age
 */
 
+SHOW DATABASES;
+SELECT database();
+USE pets_db;
+
+SHOW TABLES;
+DESC cats;
+
 SELECT *
 FROM cats
-    WHERE age = 4;
+WHERE age = 4;
 
 DELETE FROM cats
-    WHERE age = 4;
+WHERE age = 4;
 
 SELECT *
 FROM cats
 WHERE age = cat_id;
 
 DELETE FROM cats
-    WHERE age = cat_id;
+WHERE age = cat_id;
 
 SELECT * FROM cats;
-
 DELETE * FROM cats;
 
 /**
 * ! query one-to-many table from created customers and orders table that uses prep data for respective table
 *
-* ? create linked tables customers & orders in the shop_db & validate
+* ? create linked tables customers & orders in the shop_db, insert data, & validate
 *
 * * customers schema:
 * *     id,
@@ -680,11 +776,14 @@ DELETE * FROM cats;
 * *     customer_id
 */
 
+SHOW DATABASES;
 SELECT database();
-SHOW TABLES;
+
+CREATE DATABASE shop_db;
+USE shop_db;
 
 CREATE TABLE customers(
-    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    id INT AUTO_INCRMENT PRIMARY KEY,
     first_name VARCHAR(100),
     last_name VARCHAR(100),
     email VARCHAR(100)
@@ -693,7 +792,7 @@ CREATE TABLE customers(
 DESC customers;
 
 CREATE TABLE orders(
-    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     order_date DATETIME NOT NULL DEFAULT NOW(),
     amount DECIMAL(8,2),
     customer_id INT,
@@ -707,14 +806,15 @@ SHOW TABLES;
 
 INSERT INTO customers(first_name, last_name, email)
 VALUES
-    ("Ben", "Silver", "one@gmail.com"),
-    ("Fred", "Gold", "two@gmail.com");
+("Adonnis", "Creed", "acreed@gmail.com"),
+("Rocky", "Balboa", "rbalboa@hotmail.com");
 
 SELECT * FROM customers;
 
 INSERT INTO orders(order_date, amount, customer_id)
 VALUES
-    ("12-04-22", 50212.33, 1)
+("11/22/1999", 10.25, 2),
+("02/14/2023", 32.87, 1);
 
 SELECT * FROM orders;
 
@@ -731,24 +831,27 @@ SELECT * FROM orders;
 * *    last_worn(int default 0)
 */
 
-SELECT database();
 SHOW DATABASES;
+SELECT database();
 
-CREATE DATABASE shirts_db;
-USE shirts_db;
+CREATE DATABASE clothes;
+USE clothes;
 
 CREATE TABLE shirts(
-    shirt_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    shirt_id INT AUTO_INCREMENT PRIMARY KEY,
     article VARCHAR(100),
-    color VARCHAR(100),
+    color VARCHAR(20),
     shirt_size VARCHAR(4),
     last_worn INT NOT NULL DEFAULT 0
 );
 
+SHOW TABLES;
 DESC shirts;
 
 INSERT INTO shirts(article, color, shirt_size, last_worn)
-VALUES ("polo", "red", "M", 10), ("polo", "blue", "S", 2);
+VALUES
+("cotton", "red", UPPER("s"), 10),
+("cotton", "blue", UPPER("m"), 5);
 
 SELECT * FROM shirts;
 
@@ -764,12 +867,16 @@ SELECT * FROM shirts;
 */
 
 SHOW DATABASES;
+SELECT database();
 USE clothes;
+
+SHOW TABLES;
+DESC shirts;
 
 SELECT
     article,
     color
-FROM shirts
+FROM shirts;
 
 /**
 * ? read only medium shirts, print everything but shirt_id from shirts table in clothes db
@@ -783,7 +890,11 @@ FROM shirts
 */
 
 SHOW DATABASES;
+SELECT database();
 USE clothes;
+
+SHOW TABLES;
+DESC shirts;
 
 SELECT
     article,
@@ -791,7 +902,7 @@ SELECT
     shirt_size,
     last_worn
 FROM shirts
-    WHERE shirt_size = "M";
+WHERE shirt_size = UPPER("m");
 
 /**
 * ? select titles that contain 'stories'
@@ -807,13 +918,17 @@ FROM shirts
 */
 
 SHOW DATABASES;
+SELECT database();
 USE book_shop;
+
+SHOW TABLES;
+DESC books;
 
 SELECT
     title
 FROM books
-    WHERE title LIKE "%stories%"
-    ORDER BY title DESC;
+WHERE title LIKE "%stories%"
+ORDER BY title DESC;
 
 /**
 * ? find the longest book: print out the title and page count from books table in book_shop db
@@ -827,12 +942,31 @@ FROM books
 * *    stock_quantity
 */
 
+SHOW DATABASES;
+SELECT database();
+USE book_shop;
+
+SHOW TABLES;
+DESC books;
+
+-- option 1
 SELECT
     title,
     pages
 FROM books
-    ORDER BY pages DESC
-    LIMIT 1;
+ORDER BY pages DESC
+LIMIT 1;
+
+-- option 2
+SELECT
+    title,
+    pages
+FROM books
+WHERE pages = (
+    SELECT
+        MAX(pages)
+    FROM books
+);
 
 /**
 * ? print below as summary containing the title and released_year,
@@ -850,10 +984,16 @@ FROM books
 */
 
 SHOW DATABASES;
+SELECT database();
 USE book_shop;
 
+SHOW TABLES;
+DESC books;
+
 SELECT
-    CONCAT(title, "-", released_year) AS "summary"
+    CONCAT(
+        title, "-", released_year
+    ) AS LOWER("summary")
 FROM books
 ORDER BY released_year DESC
 LIMIT 3;
@@ -875,12 +1015,15 @@ SHOW DATABASES;
 SELECT database();
 USE book_shop;
 
+SHOW TABLES;
+DESC books;
+
 SELECT
     title,
     author_lname
 FROM books
-    WHERE author_lname LIKE "% %"
-    ORDER BY title DESC;
+WHERE author_lname LIKE "% %"
+ORDER BY title DESC;
 
 /**
 * ? print the title, author_lname from books table in book_shop
@@ -899,11 +1042,14 @@ SHOW DATABASES;
 SELECT database();
 USE book_shop;
 
+SHOW TABLES;
+DESC books;
+
 SELECT
     title,
     author_lname
 FROM books
-    ORDER BY author_lname, title;
+ORDER BY author_lname, title ASC;
 
 /**
 * ? print the sentence below, sort alphabetically by last name from books table in book_shop db
@@ -924,18 +1070,17 @@ SHOW DATABASES;
 SELECT database();
 USE book_shop;
 
+SHOW TABLES;
+DESC books;
+
 SELECT
     UPPER(
         CONCAT(
-            "my favorite author is ",
-            author_fname,
-            " ",
-            author_lname,
-            "!"
+            "my favorite author is ", author_fname, " ", author_lname, "!"
         )
     ) AS "yell"
 FROM books
-    ORDER BY author_lname;
+ORDER BY author_lname DESC;
 
 /**
 * ? sum all pages by each author fullname has written in books table in book_shop db
@@ -954,15 +1099,18 @@ SHOW DATABASES;
 SELECT database();
 USE book_shop;
 
+SHOW TABLES;
+DESC books;
+
 SELECT
     CONCAT(
         author_fname, " ", author_lname
-    ) AS "author",
-    SUM(pages) AS "totalPages"
+    ) AS "author fullname",
+    SUM(pages) AS "total pages"
 FROM books
-    GROUP BY author_lname, author_fname
-    ORDER BY "totalPages"
-        LIMIT 5;
+GROUP BY author_lname, author_fname
+ORDER BY pages DESC
+LIMIT 5;
 
 /**
 * ? find the 3 books with the lowest stock in books table from book_shop db
@@ -981,132 +1129,21 @@ SHOW DATABASES;
 SELECT database();
 USE book_shop;
 
+SHOW TABLES; 
+DESC books;
+
 SELECT
     title,
     released_year,
     stock_quantity
 FROM books
-    ORDER BY stock_quantity
-        LIMIT 3;
+ORDER BY stock_quantity DESC
+LIMIT 3;
 
 /**
 * ? calculate avg stock_quantity for books released in the year from books table in book_shop db
 * ?     print released_year, count of books, avg
-*
-* * schema:
-* *    author_fname,
-* *    author_lname,
-* *    pages,
-* *    title,
-* *    released_year,
-* *    stock_quantity
-*/
-
-SHOW DATABASES;
-SELECT database();
-USE book_shop;
-
-SELECT
-    COUNT(*) AS "total books/year",
-    released_year,
-    AVG(stock_quantity) AS "Stock/Year"
-FROM books
-    GROUP BY released_year;
-
-/**
-* ? replace spaces in titles with '->' with alias title from books table in book_shop db
-*
-* * schema:
-* *    author_fname,
-* *    author_lname,
-* *    pages,
-* *    title,
-* *    released_year,
-* *    stock_quantity
-*/
-
-SHOW DATABASES;
-SELECT database();
-USE book_shop;
-
-SELECT
-    REPLACE(
-        title,
-        " ",
-        "->") AS "title"
-FROM books;
-
-/**
-* ? print out forward author_lname and backwards author_lname from books table in book_shop db
-* ?    in respective columns forward and backwards and order by backwards
-*
-* * schema:
-* *    author_fname,
-* *    author_lname,
-* *    pages,
-* *    title,
-* *    released_year,
-* *    stock_quantity
-*/
-
-SHOW DATABASE;
-SELECT database();
-USE book_shop;
-
-SELECT
-    author_lname AS "forwards",
-    REVERSE(author_lname) AS "backwards"
-FROM books
-ORDER BY backwards;
-
-/**
-* ? print out full author name from books table in book_shop db
-* ?    in caps with alias "full name in caps"
-*
-* * schema:
-* *    author_fname,
-* *    author_lname,
-* *    pages,
-* *    title,
-* *    released_year,
-* *    stock_quantity
-*/
-
-SHOW DATABASES;
-SELECT database();
-USE book_shop;
-
-SELECT
-    UPPER(
-        CONCAT(
-            author_fname, author_lname
-            )
-        ) AS "full name in caps"
-FROM books;
-
-/**
-* ? print number of books in books table from book_shop db as "number of books"
-*
-* * schema:
-* *    author_fname,
-* *    author_lname,
-* *    pages,
-* *    title,
-* *    released_year,
-* *    stock_quantity
-*/
-
-SHOW DATABASES;
-SELECT database();
-USE book_shop;
-
-SELECT
-    COUNT(*) AS "numBooks"
-FROM books;
-
-/**
-* ? print, released_year & number of books released in respective year in books table from book_shop db
-* ? title column "books per year" and get top 10 highest-to-lowest 
+* ?     title column "books per year" and get top 10 highest-to-lowest 
 *
 * * schema:
 * *    author_fname,
@@ -1125,15 +1162,16 @@ SHOW TABLES;
 DESC books;
 
 SELECT
-    COUNT(*) as "books per year"
+    released_year,
+    COUNT(*) AS "books per year",
+    AVG(stock_quantity) AS "Stock per year"
 FROM books
 GROUP BY released_year
 ORDER BY "books per year" DESC
 LIMIT 10;
 
 /**
-* ? print total number of books in stock in books table from book_shop db
-* ? label "total books in stock"
+* ? replace spaces in titles with '->' with alias title from books table in book_shop db
 *
 * * schema:
 * *    author_fname,
@@ -1149,9 +1187,66 @@ SELECT database();
 USE book_shop;
 
 SHOW TABLES;
+DESC books;
 
 SELECT
-    SUM(stock_quantity)
+    REPLACE(
+        title,
+        " ",
+        "->"
+    ) AS "updated title"
+FROM books;
+
+/**
+* ? print out forward author_lname and backwards author_lname from books table in book_shop db
+* ?    in respective columns forward and backwards and order by backwards
+*
+* * schema:
+* *    author_fname,
+* *    author_lname,
+* *    pages,
+* *    title,
+* *    released_year,
+* *    stock_quantity
+*/
+
+SHOW DATABASES;
+SELECT database();
+USE book_shop;
+
+SHOW TABLES;
+DESC books;
+
+SELECT
+    author_lname AS "forward",
+    REVERSE(author_lname) AS "backwards"
+FROM books
+ORDER BY "backwards" ASC;
+
+/**
+* ? print out full author name from books table in book_shop db
+* ?    in caps with alias "full name in caps"
+*
+* * schema:
+* *    author_fname,
+* *    author_lname,
+* *    pages,
+* *    title,
+* *    released_year,
+* *    stock_quantity
+*/
+
+SHOW DATABASES;
+SELECT database();
+USE book_shop;
+
+SHOW TABLES;
+DESC books;
+
+SELECT
+    UPPER(
+        CONCAT(author_fname, " ", author_lname)
+    ) AS "full name in caps"
 FROM books;
 
 /**
@@ -1165,6 +1260,14 @@ FROM books;
 * *    shirt_size(max 4 char),
 * *    last_worn(int default 0)
 */
+
+
+
+
+
+
+
+
 
 SHOW DATABASES;
 SELECT database();
